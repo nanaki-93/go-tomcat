@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="Go" enabled="true" />
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/resources/openjdk-8u382/jre/lib/applet" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/apps-config" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/conf/Catalina" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/deploy" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/work/Catalina/localhost/docs" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/work/Catalina/localhost/examples" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/work/Catalina/localhost/host-manager" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat-dom/work/Catalina/localhost/manager" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat/conf/Catalina" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat/deploy" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat/work/Catalina/localhost/docs" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat/work/Catalina/localhost/examples" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat/work/Catalina/localhost/host-manager" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/tomcat/work/Catalina/localhost/manager" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
