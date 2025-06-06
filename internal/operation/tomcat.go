@@ -191,38 +191,27 @@ func WithRoutine(wg *sync.WaitGroup, fn func(bool) error) {
 		slog.Error("WithRoutine error", "err", err)
 	}
 }
-func (ts *TomcatManager) AddAppsConfigProps(isRetry bool) error {
+
+func (ts *TomcatManager) AddAppsConfigProps() (string, error) {
 
 	if !ts.TomcatConfig.AppConfig.WithAppsConfig {
 		if err := os.Remove(ts.TomcatPaths.AppsConfigProps); err != nil {
-			return fmt.Errorf("AddAppsConfigProps : %w", err)
+			return "", fmt.Errorf("AddAppsConfigProps : %w", err)
 		}
-		return nil
+		return "", nil
 	}
-
-	if err := ReplaceInFile(ts.TomcatPaths.AppsConfigProps, ts.TomcatPaths.AppsConfigProps, map[string]string{"{{project_path}}": ts.TomcatConfig.AppConfig.ProjectPath}); err != nil {
-		return fmt.Errorf("AddAppsConfigProps : %w", err)
-	}
-
-	if err := CheckInFile(ts.TomcatPaths.ServerXml, []string{"{{project_path}}"}); err != nil {
-		if isRetry {
-			return fmt.Errorf("AddAppsConfigProps : %w", err)
-		}
-		_ = ts.AddAppsConfigProps(true)
-	}
-
-	return nil
+	return ts.TomcatPaths.AppsConfigProps, nil
 }
 
-func (ts *TomcatManager) AddDbResources(isRetry bool) error {
+func (ts *TomcatManager) GetDbResources() (string, error) {
 
 	data, err := os.ReadFile(filepath.Join(ts.TomcatPaths.CliBasePath, dbResourcesYamlName))
 	if err != nil {
-		return fmt.Errorf("addDbResources : %w", err)
+		return "", fmt.Errorf("addDbResources : %w", err)
 	}
 	var dbConfig model.DbConfig
 	if err = yaml.Unmarshal(data, &dbConfig); err != nil {
-		return fmt.Errorf("addDbResources : %w", err)
+		return "", fmt.Errorf("addDbResources : %w", err)
 	}
 
 	dbResourceEnvMap := map[string]string{
@@ -235,28 +224,19 @@ func (ts *TomcatManager) AddDbResources(isRetry bool) error {
 		dbResourceToAdd = dbConfig.DbResource.Dev
 	}
 
-	if err = ReplaceInFile(ts.TomcatPaths.ServerXml, ts.TomcatPaths.ServerXml, map[string]string{"{{db_resources}}": dbResourceToAdd}); err != nil {
-		return fmt.Errorf("addDbResources : %w", err)
-	}
+	return dbResourceToAdd,
+		nil
 
-	if err = CheckInFile(ts.TomcatPaths.ServerXml, []string{"{{db_resources}}"}); err != nil {
-		if isRetry {
-			return fmt.Errorf("addDbResources : %w", err)
-		}
-		_ = ts.AddDbResources(true)
-	}
-
-	return nil
 }
-func (ts *TomcatManager) AddDbContext(isRetry bool) error {
+func (ts *TomcatManager) GetDbContext() (string, error) {
 
 	data, err := os.ReadFile(filepath.Join(ts.TomcatPaths.CliBasePath, dbResourcesYamlName))
 	if err != nil {
-		return fmt.Errorf("AddDbContext : %w", err)
+		return "", fmt.Errorf("GetDbContext : %w", err)
 	}
 	var dbConfig model.DbConfig
 	if err = yaml.Unmarshal(data, &dbConfig); err != nil {
-		return fmt.Errorf("AddDbContext : %w", err)
+		return "", fmt.Errorf("GetDbContext : %w", err)
 	}
 
 	dbContextEnvMap := map[string]string{
@@ -269,81 +249,46 @@ func (ts *TomcatManager) AddDbContext(isRetry bool) error {
 		dbContextToAdd = dbConfig.DbContext.Dev
 	}
 
-	if err = ReplaceInFile(ts.TomcatPaths.ContextXml, ts.TomcatPaths.ContextXml, map[string]string{"{{db_resources}}": dbContextToAdd}); err != nil {
-		return fmt.Errorf("AddDbContext : %w", err)
-	}
-	if err = CheckInFile(ts.TomcatPaths.ContextXml, []string{"{{db_resources}}"}); err != nil {
-		if isRetry {
-			return fmt.Errorf("AddDbContext : %w", err)
-		}
-		_ = ts.AddDbContext(true)
-	}
-	return nil
+	return dbContextToAdd,
+		nil
+
 }
 
-func (ts *TomcatManager) AddAppContext(isRetry bool) error {
+func (ts *TomcatManager) CopyAppContext() error {
 
 	inputContextPath := ts.joinBasePath("contexts", ts.TomcatConfig.AppConfig.ContextFileName+".xml")
 	outputContextPath := filepath.Join(ts.TomcatPaths.CatalinaLocalhost, ts.TomcatConfig.AppConfig.ContextFileName+".xml")
 
-	if err := ReplaceInFile(inputContextPath, outputContextPath, map[string]string{"{{tomcat_deploy_path}}": ts.TomcatPaths.Deploy, "{{war_name}}": ts.TomcatConfig.AppConfig.WarName}); err != nil {
-		return fmt.Errorf("addContext : %w", err)
+	data, err := os.ReadFile(inputContextPath)
+	if err != nil {
+		return fmt.Errorf("CopyAppContext ReadFile: %w", err)
 	}
-
-	if err := CheckInFile(outputContextPath, []string{"{{tomcat_deploy_path}}", "{{war_name}}"}); err != nil {
-		if isRetry {
-			return fmt.Errorf("addContext : %w", err)
-		}
-		_ = ts.AddAppContext(true)
-	}
-
-	return nil
-}
-
-func (ts *TomcatManager) SetPortsToServer(isRetry bool) error {
-
-	portsToAdd := map[string]string{
-		"{{main_port}}":      fmt.Sprint(ts.TomcatProps.CurrentTomcat.MainPort),
-		"{{server_port}}":    fmt.Sprint(ts.TomcatProps.CurrentTomcat.ServerPort),
-		"{{connector_port}}": fmt.Sprint(ts.TomcatProps.CurrentTomcat.ConnectorPort),
-		"{{redirect_port}}":  fmt.Sprint(ts.TomcatProps.CurrentTomcat.RedirectPort),
-	}
-
-	if err := ReplaceInFile(ts.TomcatPaths.ServerXml, ts.TomcatPaths.ServerXml, portsToAdd); err != nil {
-		return fmt.Errorf("setPortsToServer : %w", err)
-	}
-
-	if err := CheckInFile(ts.TomcatPaths.ServerXml, []string{"{{main_port}}", "{{server_port}}", "{{connector_port}}", "{{redirect_port}}"}); err != nil {
-		if isRetry {
-			return fmt.Errorf("setPortsToServer : %w", err)
-		}
-		_ = ts.SetPortsToServer(true)
+	err = os.WriteFile(outputContextPath, data, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("CopyAppContext WriteFile: %w", err)
 	}
 	return nil
+
 }
 
-func (ts *TomcatManager) AddIndexPage(isRetry bool) error {
+func (ts *TomcatManager) CopyIndexPage() (string, error) {
 
 	if len(ts.TomcatConfig.AppConfig.IndexFile) == 0 {
 		slog.Info("No index Props for the app:", "app", ts.TomcatProps.CurrentTomcat.AppTomcatName)
-		return nil
-	}
-	portsToAdd := map[string]string{
-		"{{server_port}}": fmt.Sprint(ts.TomcatProps.CurrentTomcat.ServerPort),
+		return "", nil
 	}
 
-	//replace port in IndexFile
-	if err := ReplaceInFile(ts.joinBasePath(ts.TomcatConfig.AppConfig.IndexFile), filepath.Join(ts.TomcatPaths.Deploy, ts.TomcatConfig.AppConfig.IndexFile), portsToAdd); err != nil {
-		return fmt.Errorf("AddIndexPage : %w", err)
+	data, err := os.ReadFile(ts.joinBasePath(ts.TomcatConfig.AppConfig.IndexFile))
+	if err != nil {
+		return "", fmt.Errorf("CopyIndexPage ReadFile: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(ts.TomcatPaths.Deploy, ts.TomcatConfig.AppConfig.IndexFile), data, os.ModePerm)
+	if err != nil {
+		return "", fmt.Errorf("CopyIndexPage WriteFile: %w", err)
 	}
 
-	if err := CheckInFile(filepath.Join(ts.TomcatPaths.Deploy, ts.TomcatConfig.AppConfig.IndexFile), []string{"{{server_port}}"}); err != nil {
-		if isRetry {
-			return fmt.Errorf("AddIndexPage : %w", err)
-		}
-		_ = ts.AddIndexPage(true)
-	}
-	return nil
+	return filepath.Join(ts.TomcatPaths.Deploy, ts.TomcatConfig.AppConfig.IndexFile), nil
+
 }
 
 func (ts *TomcatManager) CopyAppToTomcat() error {
@@ -367,7 +312,7 @@ func (ts *TomcatManager) CopyAppToTomcat() error {
 	return nil
 }
 
-func (ts *TomcatManager) SetSystemEnv() error {
+func (ts *TomcatManager) SetSystemEnv(keyToReplace map[string]string) error {
 
 	envConfig := ts.TomcatConfig.Env
 
@@ -382,13 +327,18 @@ func (ts *TomcatManager) SetSystemEnv() error {
 	}
 
 	javaOpts := envConfig.JavaOpts + " " + ts.TomcatConfig.AppConfig.JavaOpts
-	outJavaOpts := strings.ReplaceAll(javaOpts, "{{catalina_home}}", ts.TomcatPaths.HomeAppTomcat)
-	outJavaOpts = strings.ReplaceAll(outJavaOpts, "{{context_file_name}}", ts.TomcatConfig.AppConfig.ContextFileName)
-	outJavaOpts = strings.ReplaceAll(outJavaOpts, "{{debug_port}}", fmt.Sprint(ts.TomcatProps.CurrentTomcat.DebugPort))
-	if err := os.Setenv("JAVA_OPTS", outJavaOpts); err != nil {
+	javaOpts = replaceKeysInString(javaOpts, keyToReplace)
+	if err := os.Setenv("JAVA_OPTS", javaOpts); err != nil {
 		return fmt.Errorf("setSystemEnv : %w", err)
 	}
 	return nil
+}
+func replaceKeysInString(input string, keysToReplace map[string]string) string {
+	out := input
+	for oldStr, newStr := range keysToReplace {
+		out = strings.ReplaceAll(out, oldStr, newStr)
+	}
+	return out
 }
 
 func (ts *TomcatManager) joinBasePath(suffix ...string) string {
