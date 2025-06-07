@@ -15,7 +15,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"slices"
-	"sync"
 	"syscall"
 )
 
@@ -31,26 +30,24 @@ var startCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(startCmd)
 
-	startCmd.Flags().BoolP(skipMavenFlag, "s", false, "if skipMaven is true, maven task is skipped ")
+	startCmd.Flags().BoolP(skipMavenFlag, "s", false, "if skipMaven is true, maven task is skipped")
 	startCmd.Flags().StringP(envFlag, "e", "", "env to start")
 }
 
 func validateArgs() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
-			return fmt.Errorf("just one arg is allowed")
+			return fmt.Errorf("just one arg is allowed, select one from the following list: %v", validAppList)
 		}
 
 		if !slices.Contains(validAppList, args[0]) {
-			return fmt.Errorf("arg not noy valid: %s. select of from the following list: %v", args[0], validAppList)
+			return fmt.Errorf("arg not valid: %s. select one from the following list: %v", args[0], validAppList)
 		}
 		return nil
 	}
 }
 
 func execStartCmd(cmd *cobra.Command, args []string) {
-	wg := new(sync.WaitGroup)
-
 	var err error
 
 	tm, err := createTomcatManager(CliBasePath, args[0])
@@ -71,24 +68,72 @@ func execStartCmd(cmd *cobra.Command, args []string) {
 	err = tm.CreateTomcat()
 	operation.CheckErr(err)
 
-	wg.Add(6)
-	go operation.WithRoutine(wg, tm.AddAppsConfigProps)
-	go operation.WithRoutine(wg, tm.AddDbResources)
-	go operation.WithRoutine(wg, tm.AddDbContext)
-	go operation.WithRoutine(wg, tm.AddAppContext)
-	go operation.WithRoutine(wg, tm.SetPortsToServer)
-	go operation.WithRoutine(wg, tm.AddIndexPage)
-	wg.Wait()
+	dbResources, err := tm.GetDbResources()
+	operation.CheckErr(err)
+
+	dbContext, err := tm.GetDbContext()
+	operation.CheckErr(err)
+
+	err = tm.CopyAppContext()
+	operation.CheckErr(err)
+
+	fileListToAdd := []string{
+		tm.TomcatPaths.ServerXml,
+		tm.TomcatPaths.ContextXml,
+		filepath.Join(tm.TomcatPaths.CatalinaLocalhost, tm.TomcatConfig.AppConfig.ContextFileName+".xml"),
+	}
+	keysToReplace := map[string]string{
+		"{{catalina_home}}":      tm.TomcatPaths.HomeAppTomcat,
+		"{{context_file_name}}":  tm.TomcatConfig.AppConfig.ContextFileName,
+		"{{debug_port}}":         fmt.Sprint(tm.TomcatProps.CurrentTomcat.DebugPort),
+		"{{project_path}}":       tm.TomcatConfig.AppConfig.ProjectPath,
+		"{{tomcat_deploy_path}}": tm.TomcatPaths.Deploy,
+		"{{war_name}}":           tm.TomcatConfig.AppConfig.WarName,
+		"{{main_port}}":          fmt.Sprint(tm.TomcatProps.CurrentTomcat.MainPort),
+		"{{server_port}}":        fmt.Sprint(tm.TomcatProps.CurrentTomcat.ServerPort),
+		"{{connector_port}}":     fmt.Sprint(tm.TomcatProps.CurrentTomcat.ConnectorPort),
+		"{{redirect_port}}":      fmt.Sprint(tm.TomcatProps.CurrentTomcat.RedirectPort),
+		"{{db_resources}}":       dbResources,
+		"{{db_context}}":         dbContext,
+	}
+
+	appsConfigFile, err := tm.AddAppsConfigProps()
+	operation.CheckErr(err)
+	if len(appsConfigFile) > 0 {
+		fileListToAdd = append(fileListToAdd, appsConfigFile)
+	}
+
+	indexPageFile, err := tm.CopyIndexPage()
+	operation.CheckErr(err)
+	if len(indexPageFile) > 0 {
+		fileListToAdd = append(fileListToAdd, indexPageFile)
+	}
 
 	slog.Info("all the resources are added")
 
+	err = operation.UpdatePropsInFiles(fileListToAdd, keysToReplace)
+	if err != nil {
+		slog.Error("error replacing in file", "error", err)
+		return
+	}
+	slog.Info("all the resources are replaced")
+
+	checkedKeys := make([]string, 0)
+	for k := range keysToReplace {
+		checkedKeys = append(checkedKeys, k)
+	}
+	err = operation.CheckInFile(fileListToAdd, checkedKeys)
+	if err != nil {
+		slog.Error("something went wrong in the replacement process", "error", err)
+		return
+	}
 	err = buildWithMaven(cmd, tm)
 	operation.CheckErr(err)
 
 	err = tm.CopyAppToTomcat()
 	operation.CheckErr(err)
 
-	err = tm.SetSystemEnv()
+	err = tm.SetSystemEnv(keysToReplace)
 	operation.CheckErr(err)
 
 	err = tm.RunTomcat()

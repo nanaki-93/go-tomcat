@@ -26,14 +26,44 @@ func execInitCmd(cmd *cobra.Command, args []string) {
 		return
 	}
 	slog.Info("GO_TOMCAT_HOME:", cmdBaseDir)
+
 	_, err := os.Stat(CliBasePath)
 	if os.IsNotExist(err) {
 		err = os.CopyFS(CliBasePath, os.DirFS(filepath.Join(cmdBaseDir, "resources")))
 		operation.CheckErr(err, "Error copying resources folder")
 	} else {
 		slog.Warn("cli folder already exists")
+		return
 	}
-	slog.Info("all the config and directories are created")
+
+	err = operation.CheckCopiedFiles(filepath.Join(cmdBaseDir, "resources"), CliBasePath)
+	operation.CheckErr(err, "Some Files didn't get copied, clean and try the init command againg. "+
+		"If you still have the problem, copy the resource folder manually.")
+
+	slog.Info("all the config and directories are copied to cli folder")
+
+	SetProjectPathAndMvnRepository(err)
+}
+
+func SetProjectPathAndMvnRepository(err error) {
+	projectDirectory := operation.StringPrompt("Insert your smac/cleo project base directory")
+	_, err = os.Stat(projectDirectory)
+	operation.CheckErr(err, "Project directory does not exist")
+
+	mvnRepository := operation.StringPrompt("Select your maven repository path")
+	_, err = os.Stat(mvnRepository)
+	operation.CheckErr(err, "Maven repository does not exist")
+
+	filesToReplace := []string{
+		filepath.Join(CliBasePath, ".go-tomcat.yaml"),
+		filepath.Join(CliBasePath, "mvn-settings.xml")}
+
+	keysToReplace := map[string]string{
+		"{{project_base_path}}":   projectDirectory,
+		"{{mvn_repository_path}}": mvnRepository}
+
+	err = operation.UpdatePropsInFiles(filesToReplace, keysToReplace)
+	operation.CheckErr(err)
 }
 
 func init() {
