@@ -1,12 +1,15 @@
 package operation
 
 import (
+	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 func PrintCmd(cmd *exec.Cmd) {
@@ -40,4 +43,51 @@ func sliceToSlice[T any](items []T, selector func(T) int) []int {
 		used = append(used, selector(item))
 	}
 	return used
+}
+
+// YesNoPrompt asks yes/no questions using the label.
+func YesNoPrompt(label string, def bool) bool {
+	choices := "Y/n"
+	if !def {
+		choices = "y/N"
+	}
+
+	r := bufio.NewReader(os.Stdin)
+	var s string
+
+	for {
+		_, err := fmt.Fprintf(os.Stderr, "%s (%s) ", label, choices)
+		if err != nil {
+			return def
+		}
+		s, _ = r.ReadString('\n')
+		s = strings.TrimSpace(s)
+		if s == "" {
+			return def
+		}
+		s = strings.ToLower(s)
+		if s == "y" || s == "yes" {
+			return true
+		}
+		if s == "n" || s == "no" {
+			return false
+		}
+	}
+}
+
+// StringPrompt asks for a string value using the label
+func StringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		_, err := fmt.Fprint(os.Stderr, label+" ")
+		if err != nil {
+			slog.Error("Error prompting :", label, err)
+		}
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
 }

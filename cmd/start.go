@@ -111,7 +111,7 @@ func execStartCmd(cmd *cobra.Command, args []string) {
 
 	slog.Info("all the resources are added")
 
-	err = operation.ReplaceInFile(fileListToAdd, keysToReplace)
+	err = operation.UpdatePropsInFiles(fileListToAdd, keysToReplace)
 	if err != nil {
 		slog.Error("error replacing in file", "error", err)
 		return
@@ -124,7 +124,7 @@ func execStartCmd(cmd *cobra.Command, args []string) {
 	}
 	err = operation.CheckInFile(fileListToAdd, checkedKeys)
 	if err != nil {
-		slog.Error("error checking in file", "error", err)
+		slog.Error("something went wrong in the replacement process", "error", err)
 		return
 	}
 	err = buildWithMaven(cmd, tm)

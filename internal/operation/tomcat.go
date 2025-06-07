@@ -121,12 +121,12 @@ func RemoveTomcatFromRunning(runningTomcats []model.Tomcat, appTomcatNameToRemov
 func (ts *TomcatManager) UpdateAppRunningYaml() {
 	data, err := yaml.Marshal(ts.TomcatProps)
 	CheckErr(err)
-	err = os.WriteFile(ts.joinBasePath(runningAppsYamlName), data, os.ModePerm)
+	err = os.WriteFile(ts.JoinBasePath(runningAppsYamlName), data, os.ModePerm)
 	CheckErr(err)
 }
 
 func (ts *TomcatManager) CreateTomcat() error {
-	if err := os.CopyFS(ts.TomcatPaths.HomeAppTomcat, os.DirFS(ts.joinBasePath("tomcat"))); err != nil {
+	if err := os.CopyFS(ts.TomcatPaths.HomeAppTomcat, os.DirFS(ts.JoinBasePath("tomcat"))); err != nil {
 		return fmt.Errorf("CreateTomcat : %w", err)
 	}
 	return nil
@@ -154,7 +154,7 @@ func (ts *TomcatManager) addTomcatToRunningApps() error {
 		return fmt.Errorf("addTomcatToRunningApps : %w", err)
 	}
 
-	if err = os.WriteFile(ts.joinBasePath(runningAppsYamlName), runningAppsYaml, os.ModePerm); err != nil {
+	if err = os.WriteFile(ts.JoinBasePath(runningAppsYamlName), runningAppsYaml, os.ModePerm); err != nil {
 		return fmt.Errorf("addTomcatToRunningApps : %w", err)
 	}
 	return nil
@@ -176,7 +176,7 @@ func (ts *TomcatManager) RemoveUnusedTomcatFolder() error {
 		name := folder.Name()
 		if strings.Contains(name, goTomcatPrefix) {
 			if _, avoid := folderToAvoid[name]; !avoid {
-				if err = os.RemoveAll(ts.joinBasePath(folder.Name())); err != nil {
+				if err = os.RemoveAll(ts.JoinBasePath(folder.Name())); err != nil {
 					return fmt.Errorf("RemoveUnusedTomcatFolder : %w", err)
 				}
 				slog.Info("Tomcat folder removed successfully", "folder", folder.Name())
@@ -256,7 +256,7 @@ func (ts *TomcatManager) GetDbContext() (string, error) {
 
 func (ts *TomcatManager) CopyAppContext() error {
 
-	inputContextPath := ts.joinBasePath("contexts", ts.TomcatConfig.AppConfig.ContextFileName+".xml")
+	inputContextPath := ts.JoinBasePath("contexts", ts.TomcatConfig.AppConfig.ContextFileName+".xml")
 	outputContextPath := filepath.Join(ts.TomcatPaths.CatalinaLocalhost, ts.TomcatConfig.AppConfig.ContextFileName+".xml")
 
 	data, err := os.ReadFile(inputContextPath)
@@ -278,7 +278,7 @@ func (ts *TomcatManager) CopyIndexPage() (string, error) {
 		return "", nil
 	}
 
-	data, err := os.ReadFile(ts.joinBasePath(ts.TomcatConfig.AppConfig.IndexFile))
+	data, err := os.ReadFile(ts.JoinBasePath(ts.TomcatConfig.AppConfig.IndexFile))
 	if err != nil {
 		return "", fmt.Errorf("CopyIndexPage ReadFile: %w", err)
 	}
@@ -316,10 +316,10 @@ func (ts *TomcatManager) SetSystemEnv(keyToReplace map[string]string) error {
 
 	envConfig := ts.TomcatConfig.Env
 
-	if err := os.Setenv("JAVA_HOME", ts.joinBasePath(envConfig.JavaHome)); err != nil {
+	if err := os.Setenv("JAVA_HOME", ts.JoinBasePath(envConfig.JavaHome)); err != nil {
 		return fmt.Errorf("setSystemEnv : %w", err)
 	}
-	if err := os.Setenv("JRE_HOME", ts.joinBasePath(envConfig.JreHome)); err != nil {
+	if err := os.Setenv("JRE_HOME", ts.JoinBasePath(envConfig.JreHome)); err != nil {
 		return fmt.Errorf("setSystemEnv : %w", err)
 	}
 	if err := os.Setenv("CATALINA_HOME", ts.TomcatPaths.HomeAppTomcat); err != nil {
@@ -341,7 +341,7 @@ func replaceKeysInString(input string, keysToReplace map[string]string) string {
 	return out
 }
 
-func (ts *TomcatManager) joinBasePath(suffix ...string) string {
+func (ts *TomcatManager) JoinBasePath(suffix ...string) string {
 	joinSuffix := filepath.Join(suffix...)
 	return filepath.Join(ts.TomcatPaths.CliBasePath, joinSuffix)
 }
