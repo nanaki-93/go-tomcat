@@ -31,7 +31,9 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 
 	startCmd.Flags().BoolP(skipMavenFlag, "s", false, "if skipMaven is true, maven task is skipped")
+	startCmd.Flags().BoolP(offlineFlag, "o", false, "if offline is true, maven will run in offline mode")
 	startCmd.Flags().StringP(envFlag, "e", "", "env to start")
+
 }
 
 func validateArgs() func(cmd *cobra.Command, args []string) error {
@@ -184,6 +186,12 @@ func createTomcatManager(basePath, appName string) (*operation.TomcatManager, er
 
 func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 
+	offline, _ := cmd.Flags().GetBool(offlineFlag)
+	mvnOffline := ""
+	if offline {
+		mvnOffline = "-o"
+		slog.Info("Running Maven in offline mode")
+	}
 	skipMaven, _ := cmd.Flags().GetBool(skipMavenFlag)
 	if skipMaven {
 		slog.Info("Skipping Maven build")
@@ -198,7 +206,9 @@ func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 		"-s",
 		filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
 		"-Denv=tom",
-		"-DskipTests")
+		"-DskipTests",
+		mvnOffline,
+	)
 
 	operation.PrintCmd(stCmd)
 	if err := stCmd.Run(); err != nil {

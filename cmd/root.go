@@ -22,6 +22,7 @@ var validEnvList = []string{DevEnv, SitEnv}
 
 const (
 	skipMavenFlag = "skipMaven"
+	offlineFlag   = "offline"
 	envFlag       = "env"
 	DevEnv        = "dev"
 	SitEnv        = "sit"
