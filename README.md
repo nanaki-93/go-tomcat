@@ -20,8 +20,14 @@ cd go-tomcat
    
 go build -o go-tomcat
    
+## Pre requisites
+You need a tomcat server in the resources directory when you run the `init` command. 
+The project will create a `tomcat` directory in the resources folder with the necessary structure.
+
 
 ## Usage
+- Initialize the project (creates the necessary directories and files):
+- ./go-tomcat init
 
 - Update JSP files in a running Tomcat server:
   
@@ -37,7 +43,6 @@ go build -o go-tomcat
 
 - Edit your application and Tomcat configuration files as needed.
 - Place your resources in the appropriate directories (see project structure).
-- todo: add resources placeholders in the repository.
 
 ## Development
 

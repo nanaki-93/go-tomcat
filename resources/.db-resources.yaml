@@ -1,0 +1,25 @@
+db_resource:
+
+  local: |
+    <Resource name="TOM" auth="Container" type="javax.sql.DataSource" username="tomcatadmin" password="tomcatadminpwd" driverClassName="org.postgresql.Driver" url="jdbc:postgresql://127.0.0.1:5432/mytomcat"
+           maxTotal="10" maxIdle="4" removeAbandonedOnBorrow="true" removeAbandonedOnMaintenance="true" removeAbandonedTimeout="180" logAbandoned="true" maxWaitMillis="2000"
+          timeBetweenEvictionRunsMillis="5000" minEvictableIdleTimeMillis="300000"/>
+    <Resource name="TOM2" auth="Container" type="javax.sql.DataSource" username="tomcat2admin" password="tomcat2adminpwd" driverClassName="org.postgresql.Driver" url="jdbc:postgresql://127.0.0.1:5432/mytomcat2"
+           maxTotal="10" maxIdle="4" removeAbandonedOnBorrow="true" removeAbandonedOnMaintenance="true" removeAbandonedTimeout="180" logAbandoned="true" maxWaitMillis="2000"
+          timeBetweenEvictionRunsMillis="5000" minEvictableIdleTimeMillis="300000"/>
+
+  dev: |
+    <Resource name="TOM" auth="Container" type="javax.sql.DataSource" username="tomcatadmin" password="tomcatadminpwd" driverClassName="org.postgresql.Driver" url="jdbc:postgresql://127.0.0.1:5454/mytomcat"
+           maxTotal="10" maxIdle="4" removeAbandonedOnBorrow="true" removeAbandonedOnMaintenance="true" removeAbandonedTimeout="180" logAbandoned="true" maxWaitMillis="2000"
+          timeBetweenEvictionRunsMillis="5000" minEvictableIdleTimeMillis="300000"/>
+    <Resource name="TOM2" auth="Container" type="javax.sql.DataSource" username="tomcat2admin" password="tomcat2adminpwd" driverClassName="org.postgresql.Driver" url="jdbc:postgresql://127.0.0.1:5454/mytomcat2"
+           maxTotal="10" maxIdle="4" removeAbandonedOnBorrow="true" removeAbandonedOnMaintenance="true" removeAbandonedTimeout="180" logAbandoned="true" maxWaitMillis="2000"
+          timeBetweenEvictionRunsMillis="5000" minEvictableIdleTimeMillis="300000"/>
+
+
+db_context:
+  local: |
+    <Resource name="TOM" auth="Container" type="javax.sql.DataSource" username="tomcatadmin" password="tomcatadminpwd" driverClassName="org.postgresql.Driver" url="jdbc:postgresql://127.0.0.1:5454/mytomcat"/>
+  dev: |
+    <Resource name="TOM" auth="Container" type="javax.sql.DataSource" username="tomcatadmin" password="tomcatadminpwd" driverClassName="org.postgresql.Driver" url="jdbc:postgresql://127.0.0.1:5454/mytomcat"/>
+

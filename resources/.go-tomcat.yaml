@@ -1,0 +1,27 @@
+apps: ["my-tomcat"]
+env:
+  mvn_settings: "mvn-settings.xml"
+  java_home: "openjdk-8u382"
+  jre_home: "openjdk-8u382/jre"
+  java_opts: "-Xms512m 
+              -Xmx1024m 
+              -Xss256k 
+              -XX:MaxPermSize=512M
+              -Xdebug 
+              -Xnoagent 
+              -Djava.compiler=NONE            
+              -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address={{debug_port}}                  
+              "
+app:
+  my-tomcat:
+    context_file_name: "my-tomcat-context.xml"
+    war_name: "my-tomcat"
+    project_path: "{{project_base_path}}/my-tomcat"
+    target_suffix: "target"
+    java_opts: "
+                -Djava.endorsed.dirs=../endorsed 
+                -Dnet.sia.i18n.CacheResourceBundle=disable 
+                -Djavax.jdo.option.CacheXML=enable 
+                -Dcom.sun.management.jmxremote 
+                -Djava.security.auth.login.config={{catalina_home}}/webapps/{{context_file_name}}/src/security/dd/jaas.config 
+                -DTIMEOUTLOCK=300000"
