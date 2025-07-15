@@ -18,7 +18,7 @@ import (
 var CliBasePath string
 var validAppList []string
 
-var validEnvList = []string{DevEnv, SitEnv}
+var validEnvList = []string{DevEnv, SitEnv, LocalEnv}
 
 const (
 	skipMavenFlag = "skipMaven"
@@ -26,6 +26,7 @@ const (
 	envFlag       = "env"
 	DevEnv        = "dev"
 	SitEnv        = "sit"
+	LocalEnv      = "local"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -65,7 +66,7 @@ func setCliBasePath() {
 	CliBasePath = filepath.Join(userHome, ".go-tomcat")
 }
 
-// initConfig reads in config file and ENV variables if set.
+// initConfig reads in the config file and ENV variables if set.
 func initConfig() {
 
 	// Search config in home directory with name ".go-tomcat" (without extension).

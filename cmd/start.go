@@ -187,28 +187,37 @@ func createTomcatManager(basePath, appName string) (*operation.TomcatManager, er
 func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 
 	offline, _ := cmd.Flags().GetBool(offlineFlag)
-	mvnOffline := ""
-	if offline {
-		mvnOffline = "-o"
-		slog.Info("Running Maven in offline mode")
-	}
+
 	skipMaven, _ := cmd.Flags().GetBool(skipMavenFlag)
 	if skipMaven {
 		slog.Info("Skipping Maven build")
 		return nil
 	}
-
-	stCmd := exec.Command("mvn.cmd",
-		"clean",
-		"install",
-		"-f",
-		ts.TomcatConfig.AppConfig.ProjectPath,
-		"-s",
-		filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
-		"-Denv=tom",
-		"-DskipTests",
-		mvnOffline,
-	)
+	var stCmd *exec.Cmd
+	if offline {
+		stCmd = exec.Command("mvn.cmd",
+			"clean",
+			"install",
+			"-f",
+			ts.TomcatConfig.AppConfig.ProjectPath,
+			"-s",
+			filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
+			"-Denv=tom",
+			"-DskipTests",
+			"-o",
+		)
+	} else {
+		stCmd = exec.Command("mvn.cmd",
+			"clean",
+			"install",
+			"-f",
+			ts.TomcatConfig.AppConfig.ProjectPath,
+			"-s",
+			filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
+			"-Denv=tom",
+			"-DskipTests",
+		)
+	}
 
 	operation.PrintCmd(stCmd)
 	if err := stCmd.Run(); err != nil {

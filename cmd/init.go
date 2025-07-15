@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // initCmd represents the command to initialize the config and folders
@@ -47,10 +48,12 @@ func execInitCmd(cmd *cobra.Command, args []string) {
 
 func SetProjectPathAndMvnRepository(err error) {
 	projectDirectory := operation.StringPrompt("Insert your smac/cleo project base directory")
+	projectDirectory = strings.ReplaceAll(projectDirectory, "\\", "/")
 	_, err = os.Stat(projectDirectory)
 	operation.CheckErr(err, "Project directory does not exist")
 
 	mvnRepository := operation.StringPrompt("Select your maven repository path")
+	mvnRepository = strings.ReplaceAll(mvnRepository, "\\", "/")
 	_, err = os.Stat(mvnRepository)
 	operation.CheckErr(err, "Maven repository does not exist")
 

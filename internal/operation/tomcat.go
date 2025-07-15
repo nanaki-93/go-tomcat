@@ -215,8 +215,9 @@ func (ts *TomcatManager) GetDbResources() (string, error) {
 	}
 
 	dbResourceEnvMap := map[string]string{
-		"dev": dbConfig.DbResource.Dev,
-		"sit": dbConfig.DbResource.Sit,
+		"local": dbConfig.DbResource.Local,
+		"dev":   dbConfig.DbResource.Dev,
+		"sit":   dbConfig.DbResource.Sit,
 	}
 	dbResourceToAdd, ok := dbResourceEnvMap[ts.TomcatConfig.EnvToStart]
 	if !ok {
@@ -224,8 +225,7 @@ func (ts *TomcatManager) GetDbResources() (string, error) {
 		dbResourceToAdd = dbConfig.DbResource.Dev
 	}
 
-	return dbResourceToAdd,
-		nil
+	return dbResourceToAdd, nil
 
 }
 func (ts *TomcatManager) GetDbContext() (string, error) {
@@ -240,8 +240,9 @@ func (ts *TomcatManager) GetDbContext() (string, error) {
 	}
 
 	dbContextEnvMap := map[string]string{
-		"dev": dbConfig.DbContext.Dev,
-		"sit": dbConfig.DbContext.Sit,
+		"local": dbConfig.DbContext.Local,
+		"dev":   dbConfig.DbContext.Dev,
+		"sit":   dbConfig.DbContext.Sit,
 	}
 	dbContextToAdd, ok := dbContextEnvMap[ts.TomcatConfig.EnvToStart]
 	if !ok {

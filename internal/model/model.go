@@ -26,6 +26,7 @@ type DbConfig struct {
 	DbContext  DbResource `yaml:"db_context"`
 }
 type DbResource struct {
-	Dev string `yaml:"dev"`
-	Sit string `yaml:"sit"`
+	Local string `yaml:"local"`
+	Dev   string `yaml:"dev"`
+	Sit   string `yaml:"sit"`
 }
