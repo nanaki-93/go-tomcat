@@ -1,14 +1,8 @@
-/*
-Copyright © 2025 Marco Andreose <andreose.marco93@gmail.com>
-*/
+// Package cmd /*
 package cmd
 
 import (
 	"fmt"
-	"github.com/nanaki-93/go-tomcat/internal/model"
-	"github.com/nanaki-93/go-tomcat/internal/operation"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -16,6 +10,11 @@ import (
 	"path/filepath"
 	"slices"
 	"syscall"
+
+	"github.com/nanaki-93/go-tomcat/internal/model"
+	"github.com/nanaki-93/go-tomcat/internal/operation"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // startCmd represents the master command
@@ -217,6 +216,15 @@ func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 			"-Denv=tom",
 			"-DskipTests",
 		)
+	}
+
+	javaHome := ts.TomcatConfig.Env.JavaHome
+	if javaHome != "" {
+		env := append(os.Environ(), fmt.Sprintf("JAVA_HOME=%s", javaHome))
+		pathVar := os.Getenv("PATH")
+		sep := string(os.PathListSeparator)
+		env = append(env, fmt.Sprintf("PATH=%s%s%s", filepath.Join(javaHome, "bin"), sep, pathVar))
+		stCmd.Env = env
 	}
 
 	operation.PrintCmd(stCmd)
