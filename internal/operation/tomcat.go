@@ -2,15 +2,15 @@ package operation
 
 import (
 	"fmt"
-	"github.com/nanaki-93/go-tomcat/internal/model"
-	"gopkg.in/yaml.v3"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
-	"sync"
+
+	"github.com/nanaki-93/go-tomcat/internal/model"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -184,12 +184,6 @@ func (ts *TomcatManager) RemoveUnusedTomcatFolder() error {
 		}
 	}
 	return nil
-}
-func WithRoutine(wg *sync.WaitGroup, fn func(bool) error) {
-	defer wg.Done()
-	if err := fn(false); err != nil {
-		slog.Error("WithRoutine error", "err", err)
-	}
 }
 
 func (ts *TomcatManager) AddAppsConfigProps() (string, error) {

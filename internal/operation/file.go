@@ -18,6 +18,9 @@ func UpdatePropsInFiles(fileSlice []string, mapToReplace map[string]string) erro
 		}
 		out := string(inputFile)
 		for oldStr, newStr := range mapToReplace {
+			if oldStr == "{{db_context}}" {
+				slog.Warn("{{db_context}} : ", newStr)
+			}
 			out = strings.ReplaceAll(out, oldStr, newStr)
 		}
 
