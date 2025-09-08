@@ -134,7 +134,10 @@ func execStartCmd(cmd *cobra.Command, args []string) {
 	err = tm.CopyAppToTomcat()
 	operation.CheckErr(err)
 
-	err = tm.SetSystemEnv(keysToReplace)
+	err = tm.SetSystemEnv()
+	operation.CheckErr(err)
+
+	err = tm.SetJavaOpts(keysToReplace)
 	operation.CheckErr(err)
 
 	err = tm.RunTomcat()
@@ -218,14 +221,8 @@ func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 		)
 	}
 
-	javaHome := ts.TomcatConfig.Env.JavaHome
-	if javaHome != "" {
-		env := append(os.Environ(), fmt.Sprintf("JAVA_HOME=%s", javaHome))
-		pathVar := os.Getenv("PATH")
-		sep := string(os.PathListSeparator)
-		env = append(env, fmt.Sprintf("PATH=%s%s%s", filepath.Join(javaHome, "bin"), sep, pathVar))
-		stCmd.Env = env
-	}
+	err := ts.SetSystemEnv()
+	operation.CheckErr(err)
 
 	operation.PrintCmd(stCmd)
 	if err := stCmd.Run(); err != nil {

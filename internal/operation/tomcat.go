@@ -307,7 +307,7 @@ func (ts *TomcatManager) CopyAppToTomcat() error {
 	return nil
 }
 
-func (ts *TomcatManager) SetSystemEnv(keyToReplace map[string]string) error {
+func (ts *TomcatManager) SetSystemEnv() error {
 
 	envConfig := ts.TomcatConfig.Env
 
@@ -320,6 +320,13 @@ func (ts *TomcatManager) SetSystemEnv(keyToReplace map[string]string) error {
 	if err := os.Setenv("CATALINA_HOME", ts.TomcatPaths.HomeAppTomcat); err != nil {
 		return fmt.Errorf("setSystemEnv : %w", err)
 	}
+
+	return nil
+}
+
+func (ts *TomcatManager) SetJavaOpts(keyToReplace map[string]string) error {
+
+	envConfig := ts.TomcatConfig.Env
 
 	javaOpts := envConfig.JavaOpts + " " + ts.TomcatConfig.AppConfig.JavaOpts
 	javaOpts = replaceKeysInString(javaOpts, keyToReplace)
