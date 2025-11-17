@@ -2,8 +2,9 @@ package model
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
 const GoTomcatPrefix = "go-tomcat-"
@@ -19,6 +20,15 @@ type Tomcat struct {
 	DebugPort     int    `yaml:"debug_port"`
 	ConnectorPort int    `yaml:"-"`
 	RedirectPort  int    `yaml:"-"`
+}
+
+type Acquirers struct {
+	Acquirers map[string]Acquirer `yaml:"acquirers"`
+}
+type Acquirer struct {
+	Dev string `yaml:"dev"`
+	Sit string `yaml:"sit"`
+	Uat string `yaml:"uat"`
 }
 
 type TomcatGlobalConfig struct {
@@ -45,6 +55,7 @@ type AppConfig struct {
 	TargetSuffix    string `mapstructure:"target_suffix"`
 	JavaOpts        string `mapstructure:"java_opts"`
 	WithAppsConfig  bool   `mapstructure:"with_apps_config"`
+	WithAcquirer    bool   `mapstructure:"with_acquirer"`
 	IndexFile       string `mapstructure:"index_file"`
 }
 

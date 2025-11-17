@@ -17,12 +17,14 @@ const (
 	goTomcatPrefix      = "go-tomcat-"
 	runningAppsYamlName = ".running-tomcats.yaml"
 	dbResourcesYamlName = ".db-resources.yaml"
+	acquirerYamlName    = ".acquirer.yaml"
 	hostToCheck         = "0.0.0.0"
 	StartMainPort       = 9000
 	StartServerPort     = 8000
 	StartDebugPort      = 5000
 	StartConnectorPort  = 8100
 	StartRedirectPort   = 8400
+	GenericAcquirerKey  = "GENERIC"
 )
 
 type TomcatManager struct {
@@ -197,6 +199,52 @@ func (ts *TomcatManager) AddAppsConfigProps() (string, error) {
 	return ts.TomcatPaths.AppsConfigProps, nil
 }
 
+func (ts *TomcatManager) SetAcquirer(acquirerToSet string) (string, error) {
+	env := ts.TomcatConfig.EnvToStart
+
+	if !ts.TomcatConfig.AppConfig.WithAcquirer {
+		return "", nil
+	}
+
+	validAcquirer, err := ts.getAcquirerList()
+	if err != nil {
+		return "", fmt.Errorf("SetAcquirer: %w", err)
+	}
+
+	if env == "dev" && acquirerToSet == "" {
+		return validAcquirer[GenericAcquirerKey].Dev, nil
+	}
+
+	acquirer, exists := validAcquirer[acquirerToSet]
+	if !exists || acquirer == (model.Acquirer{}) {
+		return "", fmt.Errorf("SetAcquirer: acquirer not found for env %s", env)
+	}
+
+	switch env {
+	case "dev":
+		return acquirer.Dev, nil
+	case "sit":
+		return acquirer.Sit, nil
+	case "uat":
+		return acquirer.Uat, nil
+	default:
+		return "", fmt.Errorf("SetAcquirer: unsupported environment %s", env)
+	}
+}
+
+func (ts *TomcatManager) getAcquirerList() (map[string]model.Acquirer, error) {
+
+	data, err := os.ReadFile(filepath.Join(ts.TomcatPaths.CliBasePath, acquirerYamlName))
+	if err != nil {
+		return map[string]model.Acquirer{}, fmt.Errorf("getAcquirerList : %w", err)
+	}
+	var acquirers model.Acquirers
+	if err = yaml.Unmarshal(data, &acquirers); err != nil {
+		return map[string]model.Acquirer{}, fmt.Errorf("getAcquirerList : %w", err)
+	}
+	return acquirers.Acquirers, nil
+}
+
 func (ts *TomcatManager) GetDbResources() (string, error) {
 
 	data, err := os.ReadFile(filepath.Join(ts.TomcatPaths.CliBasePath, dbResourcesYamlName))
@@ -330,6 +378,7 @@ func (ts *TomcatManager) SetJavaOpts(keyToReplace map[string]string) error {
 
 	javaOpts := envConfig.JavaOpts + " " + ts.TomcatConfig.AppConfig.JavaOpts
 	javaOpts = replaceKeysInString(javaOpts, keyToReplace)
+	fmt.Println("JAVA_OPTS: " + javaOpts)
 	if err := os.Setenv("JAVA_OPTS", javaOpts); err != nil {
 		return fmt.Errorf("setSystemEnv : %w", err)
 	}

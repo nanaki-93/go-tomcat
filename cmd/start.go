@@ -32,7 +32,7 @@ func init() {
 	startCmd.Flags().BoolP(skipMavenFlag, "s", false, "if skipMaven is true, maven task is skipped")
 	startCmd.Flags().BoolP(offlineFlag, "o", false, "if offline is true, maven will run in offline mode")
 	startCmd.Flags().StringP(envFlag, "e", "", "env to start")
-
+	startCmd.Flags().StringP(acquirerFlag, "a", "", "acquirer to start")
 }
 
 func validateArgs() func(cmd *cobra.Command, args []string) error {
@@ -83,6 +83,11 @@ func execStartCmd(cmd *cobra.Command, args []string) {
 		tm.TomcatPaths.ContextXml,
 		filepath.Join(tm.TomcatPaths.CatalinaLocalhost, tm.TomcatConfig.AppConfig.ContextFileName+".xml"),
 	}
+
+	acquirer, _ := cmd.Flags().GetString(acquirerFlag)
+	acquirerToSet, err := tm.SetAcquirer(acquirer)
+	operation.CheckErr(err)
+
 	keysToReplace := map[string]string{
 		"{{catalina_home}}":      tm.TomcatPaths.HomeAppTomcat,
 		"{{context_file_name}}":  tm.TomcatConfig.AppConfig.ContextFileName,
@@ -96,6 +101,10 @@ func execStartCmd(cmd *cobra.Command, args []string) {
 		"{{redirect_port}}":      fmt.Sprint(tm.TomcatProps.CurrentTomcat.RedirectPort),
 		"{{db_resources}}":       dbResources,
 		"{{db_context}}":         dbContext,
+	}
+
+	if acquirerToSet != "" {
+		keysToReplace["{{acquirer}}"] = acquirerToSet
 	}
 
 	appsConfigFile, err := tm.AddAppsConfigProps()

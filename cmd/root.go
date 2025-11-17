@@ -4,8 +4,9 @@ Copyright © 2025 Marco Andreose <andreose.marco93@gmail.com>
 package cmd
 
 import (
-	"github.com/nanaki-93/go-tomcat/internal/operation"
 	"log/slog"
+
+	"github.com/nanaki-93/go-tomcat/internal/operation"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,14 +19,16 @@ import (
 var CliBasePath string
 var validAppList []string
 
-var validEnvList = []string{DevEnv, SitEnv, LocalEnv}
+var validEnvList = []string{DevEnv, SitEnv, UatEnv, LocalEnv}
 
 const (
 	skipMavenFlag = "skipMaven"
 	offlineFlag   = "offline"
 	envFlag       = "env"
+	acquirerFlag  = "acquirer"
 	DevEnv        = "dev"
 	SitEnv        = "sit"
+	UatEnv        = "uat"
 	LocalEnv      = "local"
 )
 
