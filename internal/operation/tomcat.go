@@ -24,7 +24,6 @@ const (
 	StartDebugPort      = 5000
 	StartConnectorPort  = 8100
 	StartRedirectPort   = 8400
-	GenericAcquirerKey  = "GENERIC"
 )
 
 type TomcatManager struct {
@@ -211,8 +210,12 @@ func (ts *TomcatManager) SetAcquirer(acquirerToSet string) (string, error) {
 		return "", fmt.Errorf("SetAcquirer: %w", err)
 	}
 
-	if env == "dev" && acquirerToSet == "" {
-		return validAcquirer[GenericAcquirerKey].Dev, nil
+	// If no acquirer supplied, let user pick one via Bubble Tea
+	if acquirerToSet == "" {
+		acquirerToSet, err = selectAcquirerWithBubbleTea(validAcquirer)
+		if err != nil {
+			return "", fmt.Errorf("SetAcquirer: %w", err)
+		}
 	}
 
 	acquirer, exists := validAcquirer[acquirerToSet]
