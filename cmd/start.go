@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"slices"
@@ -170,7 +169,6 @@ func cleanupFunction(ts *operation.TomcatManager) {
 
 	err := ts.RemoveCurrentFromRunningAppsConfig()
 	operation.CheckErr(err)
-	ts.UpdateAppRunningYaml()
 }
 
 func createTomcatManager(basePath, appName string) (*operation.TomcatManager, error) {
@@ -185,7 +183,7 @@ func createTomcatManager(basePath, appName string) (*operation.TomcatManager, er
 		return &operation.TomcatManager{}, fmt.Errorf("createTomcatManager : %w", err)
 	}
 
-	tomcatProps, err := operation.CreateTomcatProps(basePath)
+	tomcatProps, err := operation.LoadTomcatProps(basePath)
 	if err != nil {
 		return &operation.TomcatManager{}, fmt.Errorf("createTomcatManager : %w", err)
 	}
@@ -204,31 +202,7 @@ func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 		slog.Info("Skipping Maven build")
 		return nil
 	}
-	var stCmd *exec.Cmd
-	if offline {
-		stCmd = exec.Command("mvn.cmd",
-			"clean",
-			"install",
-			"-f",
-			ts.TomcatConfig.AppConfig.ProjectPath,
-			"-s",
-			filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
-			"-Denv=tom",
-			"-DskipTests",
-			"-o",
-		)
-	} else {
-		stCmd = exec.Command("mvn.cmd",
-			"clean",
-			"install",
-			"-f",
-			ts.TomcatConfig.AppConfig.ProjectPath,
-			"-s",
-			filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
-			"-Denv=tom",
-			"-DskipTests",
-		)
-	}
+	stCmd := ts.GetMvnCommand(offline)
 
 	err := ts.SetSystemEnv()
 	operation.CheckErr(err)

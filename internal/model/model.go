@@ -29,4 +29,5 @@ type DbResource struct {
 	Local string `yaml:"local"`
 	Dev   string `yaml:"dev"`
 	Sit   string `yaml:"sit"`
+	Uat   string `yaml:"uat"`
 }

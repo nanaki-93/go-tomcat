@@ -40,22 +40,23 @@ func NewTomcatManager(config *model.TomcatGlobalConfig, tomcatProps *model.Tomca
 	}
 }
 
-func CreateTomcatProps(basePath string) (model.TomcatProps, error) {
+func LoadTomcatProps(basePath string) (model.TomcatProps, error) {
 
 	tomcat := model.TomcatProps{}
 
 	data, err := os.ReadFile(filepath.Join(basePath, runningAppsYamlName))
 	if err != nil {
-		return model.TomcatProps{}, fmt.Errorf("SetRunningAppsConfig : %w", err)
+		return model.TomcatProps{}, fmt.Errorf("LoadTomcatProps : %w", err)
 	}
 
 	if err = yaml.Unmarshal(data, &tomcat); err != nil {
-		return model.TomcatProps{}, fmt.Errorf("SetRunningAppsConfig : %w", err)
+		return model.TomcatProps{}, fmt.Errorf("LoadTomcatProps : %w", err)
 	}
 	return tomcat, nil
 }
 
 func (ts *TomcatManager) RemoveFromRunningAppsConfig() error {
+	//fixme reupload running tomcat from file
 	changed := false
 	for _, tomcat := range ts.TomcatProps.RunningTomcats {
 
@@ -71,7 +72,7 @@ func (ts *TomcatManager) RemoveFromRunningAppsConfig() error {
 }
 
 func (ts *TomcatManager) RemoveCurrentFromRunningAppsConfig() error {
-
+	//fixme reupload running tomcat from file
 	ts.TomcatProps.RunningTomcats = RemoveTomcatFromRunning(ts.TomcatProps.RunningTomcats, ts.TomcatProps.CurrentTomcat.AppTomcatName)
 	ts.UpdateAppRunningYaml()
 
@@ -112,11 +113,18 @@ func findNextPort(usedPorts []int, startPort int) int {
 }
 
 func RemoveTomcatFromRunning(runningTomcats []model.Tomcat, appTomcatNameToRemove string) []model.Tomcat {
-	return slices.DeleteFunc(
-		runningTomcats,
-		func(tom model.Tomcat) bool {
-			return tom.AppTomcatName == appTomcatNameToRemove
-		})
+	result := make([]model.Tomcat, 0, len(runningTomcats))
+	slog.Info("Removing tomcat from running list", "tomcat", appTomcatNameToRemove)
+	for _, tom := range runningTomcats {
+		slog.Info("Checking tomcat to remove", "tomcat", tom.AppTomcatName)
+
+		if tom.AppTomcatName != appTomcatNameToRemove {
+			slog.Info("Tomcat removed from running list", "tomcat", tom)
+			result = append(result, tom)
+		}
+	}
+	slog.Info("Running Tomcat list updated", "runningTomcats", result)
+	return result
 }
 
 func (ts *TomcatManager) UpdateAppRunningYaml() {
@@ -263,6 +271,7 @@ func (ts *TomcatManager) GetDbResources() (string, error) {
 		"local": dbConfig.DbResource.Local,
 		"dev":   dbConfig.DbResource.Dev,
 		"sit":   dbConfig.DbResource.Sit,
+		"uat":   dbConfig.DbResource.Uat,
 	}
 	dbResourceToAdd, ok := dbResourceEnvMap[ts.TomcatConfig.EnvToStart]
 	if !ok {
@@ -288,6 +297,7 @@ func (ts *TomcatManager) GetDbContext() (string, error) {
 		"local": dbConfig.DbContext.Local,
 		"dev":   dbConfig.DbContext.Dev,
 		"sit":   dbConfig.DbContext.Sit,
+		"uat":   dbConfig.DbContext.Uat,
 	}
 	dbContextToAdd, ok := dbContextEnvMap[ts.TomcatConfig.EnvToStart]
 	if !ok {
@@ -398,4 +408,16 @@ func replaceKeysInString(input string, keysToReplace map[string]string) string {
 func (ts *TomcatManager) JoinBasePath(suffix ...string) string {
 	joinSuffix := filepath.Join(suffix...)
 	return filepath.Join(ts.TomcatPaths.CliBasePath, joinSuffix)
+}
+func (ts *TomcatManager) GetMvnCommand(offline bool) *exec.Cmd {
+	args := []string{
+		"clean", "install",
+		"-f", ts.TomcatConfig.AppConfig.ProjectPath,
+		"-s", filepath.Join(ts.TomcatPaths.CliBasePath, ts.TomcatConfig.Env.MvnSettings),
+		"-Denv=tom", "-DskipTests",
+	}
+	if offline {
+		args = append(args, "-o")
+	}
+	return exec.Command("mvn.cmd", args...)
 }
