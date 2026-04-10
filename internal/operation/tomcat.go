@@ -409,6 +409,7 @@ func (ts *TomcatManager) JoinBasePath(suffix ...string) string {
 	joinSuffix := filepath.Join(suffix...)
 	return filepath.Join(ts.TomcatPaths.CliBasePath, joinSuffix)
 }
+
 func (ts *TomcatManager) GetMvnCommand(offline bool) *exec.Cmd {
 	args := []string{
 		"clean", "install",
@@ -419,5 +420,6 @@ func (ts *TomcatManager) GetMvnCommand(offline bool) *exec.Cmd {
 	if offline {
 		args = append(args, "-o")
 	}
-	return exec.Command("mvn.cmd", args...)
+	mvnCmd := ts.JoinBasePath("apache-maven-3.8.5", "bin", "mvn.cmd")
+	return exec.Command(mvnCmd, args...)
 }

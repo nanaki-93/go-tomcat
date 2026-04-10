@@ -202,9 +202,10 @@ func buildWithMaven(cmd *cobra.Command, ts *operation.TomcatManager) error {
 		slog.Info("Skipping Maven build")
 		return nil
 	}
+	err := ts.SetSystemEnv()
+
 	stCmd := ts.GetMvnCommand(offline)
 
-	err := ts.SetSystemEnv()
 	operation.CheckErr(err)
 
 	operation.PrintCmd(stCmd)
